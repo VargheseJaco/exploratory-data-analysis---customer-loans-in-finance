@@ -19,7 +19,7 @@
 - **loan_status**: Current status of the loan
 - **payment_plan**: Indicates if a payment plan is in place for the loan. Indication borrower is struggling to pay.
 - **purpose**: A category provided by the borrower for the loan request.
-- **dti**: A ratio calculated using the borrowerâ€™s total monthly debt payments on the total debt obligations, excluding mortgage and the requested LC loan, divided by the borrowerâ€™s self-reported monthly income.
+- **dti**: A ratio calculated using the borrower's total monthly debt payments on the total debt obligations, excluding mortgage and the requested LC loan, divided by the borrower's self-reported monthly income.
 - **delinq_2yr**: The number of 30+ days past-due payment in the borrower's credit file for the past 2 years.
 - **earliest_credit_line**: The month the borrower's earliest reported credit line was opened
 - **inq_last_6mths**: The number of inquiries in past 6 months (excluding auto and mortgage inquiries)
