@@ -1,15 +1,15 @@
 #%%
-import pandas as pd
 from pathlib import Path
-import psycopg2
 from sqlalchemy import create_engine
+import pandas as pd
+import psycopg2
 import yaml
 
 credentials_dict = yaml.safe_load(Path('credentials.yaml').read_text())
 
 class RDSDatabaseConnector:
     """
-    A class to extract the data from the cloud.
+    A class for extracting data from the cloud.
 
     Attributes
     -----------
@@ -27,7 +27,7 @@ class RDSDatabaseConnector:
     Methods
     -------
     engine_init(dbtype='postgresql',dbapi='psycopg2'):
-        initialises engine attribute to connect to a database with default strings for the type of database(dbtype) and API(dbapi)
+        initialises engine attribute to connect to a database
 
     extract_to_pandas:
         reads the specified table and creates a Pandas dataframe
@@ -37,6 +37,14 @@ class RDSDatabaseConnector:
 
     """
     def __init__(self, credentials):
+        """
+        Constructs all the necessary attributes for the connector object.
+
+        Parameters
+        ----------
+            credentials : dict
+                dictionary of credentials needed to connect to cloud database
+        """
         self.host = credentials['RDS_HOST']
         self.password = credentials['RDS_PASSWORD']
         self.user = credentials['RDS_USER']
@@ -44,21 +52,63 @@ class RDSDatabaseConnector:
         self.port = credentials['RDS_PORT']
 
     def engine_init(self,dbtype='postgresql',dbapi='psycopg2'):
+        """
+        Initialises the engine attribute to connect to a database
+
+        Parameters
+        ----------
+        dbtype : str
+            type of database (default is postgresql)
+
+        dbapi : str
+            API used for connection
+
+        Returns
+        -------
+        None
+        """
         self.engine = create_engine(f"{dbtype}+{dbapi}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}")
 
-    def extract_to_pandas(self):
-        return pd.read_sql_table('loan_payments', self.engine)
+    def extract_to_pandas(self,table):
+        """
+        Extracts a table from the database to a Pandas dataframe
+
+        Parameters
+        ----------
+        table : str
+            name of the table to extract
+
+        Returns
+        -------
+        a Pandas dataframe
+        """
+        return pd.read_sql_table(table, self.engine)
     
-    def data_to_csv(self,path):
-        self.extract_to_pandas().to_csv(path)
+    def data_to_csv(self,table,path):
+        """
+        Extracts a table from the database to a Pandas dataframe and saves it as  a csv
+
+        Parameters
+        ----------
+        table : str
+            name of the table to extract
+
+        path: Path
+            filepath to write the csv to
+
+        Returns
+        -------
+        None
+        """
+        self.extract_to_pandas(table).to_csv(path)
 
 # %%
 conn = RDSDatabaseConnector(credentials_dict)
 
 conn.engine_init()
-conn.data_to_csv(Path('loan_payments.csv'))
+conn.data_to_csv('loan_payments',Path('loan_payments.csv'))
 
 # %%
 loan_payments = pd.read_csv(Path('loan_payments.csv'))
-loan_payments.head(5)
+loan_payments.iloc[0]
 # %%
