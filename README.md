@@ -1,6 +1,25 @@
 # Exploratory Data Analysis - Customer Loans in Finance
 
-## Full loans dataset schema
+## Description:
+This is an EDA project with the aim of analysing and visualising a loan payments dataset. The data is transformed to correct data types, impute null values, mitigate skew and remove outliers. The processed data is then analysed to identify key performance indicators for the loans, such as the current state of payments and projected loss.
+
+## File Structure:
+- **analysis.ipynb**: Jupyter Notebook showing the results of analysis carried out on the dataset and relevant visualisations.
+- **classes.py**: Python script containing all the classes used in this project
+- **db_utils.py**: Python script to extract the loan payment information from an AWS database and write it to a csv
+- **loan_payments.csv**: CSV file containing the table extracted from the AWS database
+- **processed_loan_payments.csv**: CSV file containing the result of all the transformations applied to loan_payments.csv
+- **transformations.py**: Python script that turns loan_payments.csv into a Pandas dataframe and applies all necessary transformations. It then writes processed_loan_payments.csv
+
+## Classes:
+- **RDSDatabaseConnector**: A class for extracting data from the cloud.
+- **DataTransform**: A class for transforming columns in a dataframe.
+- **DataFrameInfo**: A class for extracting information about a dataframe 
+- **Plotter**: A class for plotting information from a dataframe
+- **DataFrameTransform**: A class for transforming the columns of a dataframe
+
+
+## Data Dictionary:
 - **id**: unique id of the loan
 - **member_id**: id of the member to took out the loan
 - **loan_amount**: amount of loan the applicant received
