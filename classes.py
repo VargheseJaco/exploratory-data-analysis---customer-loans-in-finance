@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from scipy import stats
 from sqlalchemy import create_engine
 import seaborn as sns
@@ -140,7 +141,7 @@ class DataTransform:
         a Pandas dataframe
         """
         for i in columns:
-            self.dataframe[i] = pd.to_datetime(self.dataframe[i], format="mixed")
+            self.dataframe[i] = pd.to_datetime(self.dataframe[i], format="mixed").dt.to_period('M')
         return self.dataframe
 
     def to_numeric(self,columns: list):
@@ -299,7 +300,7 @@ class DataFrameInfo:
 
         Returns
         -------
-        a list of number of unique values
+        a list of numbers of unique values
         """
         if columns == None:
             num_unique_values = self.dataframe.nunique()
@@ -348,6 +349,65 @@ class DataFrameInfo:
         """
         return self.dataframe.isnull().sum() * 100 / len(self.dataframe)
 
+    def column_percentage(self, numerator, total):
+        '''
+        calculates the percentage of one column's sum over another column's sum.
+
+        Parameters
+        ----------
+        numerator: 
+            name of the column for which the percentage will be calculated
+            
+        total: 
+            name of the column of which the total will be used as the denominator in the fraction
+
+        Returns
+        ----------
+        the percentage of the
+        '''
+        numerator_sum = self.dataframe[numerator].sum()
+        total_sum = self.dataframe[total].sum() 
+
+        percentage = (numerator_sum / total_sum) * 100
+        
+        return percentage
+    
+    def total_recovered_over_period(self, period: int):
+        
+        '''
+        returns a dataframe with extra information about collections
+
+        Parameters
+        ----------
+        period: 
+            number of months to calculate the projection for
+        
+        Returns
+        ----------
+        dataframe with added columns 'term_end', 'months_left' and 'collections_over_period'
+        '''
+        collections = self.dataframe.copy(deep= True)
+        
+        def term_end(i):
+            if i['term'] == '36 months': 
+                return i['issue_date'] + 36
+            elif i['term'] == '60 months':
+                return i['issue_date'] + 60
+        
+        def predicted_recovery(i):
+            if i['months_left'] >= period: 
+                return i['instalment'] * period 
+            elif i['months_left'] < period: 
+                return i['instalment'] * i['months_left']
+        
+        collections['term_end'] = collections.apply(term_end, axis=1)
+        
+        collections['months_left'] = collections['term_end'].astype(int) - collections['last_payment_date'].astype(int)
+        collections = collections[collections['months_left'] > 0]
+        
+        collections['collections_over_period'] = collections.apply(predicted_recovery, axis=1)
+
+        return collections             
 class Plotter:
     """
     A class for plotting information from a dataframe
@@ -518,11 +578,10 @@ class Plotter:
         none
         """
         corr = self.dataframe[columns].corr()
-        pyplot.figure(figsize=(17, 15))
+        pyplot.figure(figsize=(15, 13))
         sns.heatmap(corr,square=True, annot=True, fmt=".2f")
         pyplot.title('Correlation Heatmap')
         pyplot.show()
-
 
 class DataFrameTransform(DataFrameInfo):
     """
@@ -561,7 +620,6 @@ class DataFrameTransform(DataFrameInfo):
         """
         imputed_df = self.dataframe.copy(deep= True)
         for i in column_dict:
-            print(i)
             if column_dict[i] == 'mean':
                 imputed_df[i] = imputed_df[i].fillna(self.mean(i)[0])
             elif column_dict[i] == 'median':
@@ -591,7 +649,7 @@ class DataFrameTransform(DataFrameInfo):
         pd.Dataframe with all the skewed columns corrected
         """
         imputed_skews = dict(self.dataframe.skew(numeric_only=True))
-        to_unskew = {i:imputed_skews[i] for i in imputed_skews if imputed_skews[i]>1}
+        to_unskew = {i:imputed_skews[i] for i in imputed_skews if imputed_skews[i]>2}
         skew_transformed = self.dataframe.copy(deep= True)
         for i in to_unskew:
             if i not in exceptions:
