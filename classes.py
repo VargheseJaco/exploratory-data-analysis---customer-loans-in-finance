@@ -526,7 +526,7 @@ class Plotter:
                 pyplot.show()
                 
         
-    def scatter_plot(self,x,y):
+    def scatter_plot(self,x,y,xlab=None,ylab=None,title=None):
         """
         Plots a scatter plot between two columns
 
@@ -542,8 +542,17 @@ class Plotter:
         -------
         none
         """
-        print(f"{x} vs {y} scatter plot")
-        scatter_plot = self.dataframe.plot.scatter(x,y)
+        sns.regplot(x= x, y= y, marker= 'x',line_kws={'linewidth':0.5})
+        pyplot.xlabel(xlab)
+        pyplot.ylabel(ylab)
+        pyplot.title(title)
+        pyplot.show()
+
+    def bar_plot(self,x,y,xlab=None,ylab=None,title=None):
+        sns.barplot(x= x, y= y)
+        pyplot.xlabel(xlab)
+        pyplot.ylabel(ylab)
+        pyplot.title(title)
         pyplot.show()
     
     def grid_box_plot(self, column_names):
