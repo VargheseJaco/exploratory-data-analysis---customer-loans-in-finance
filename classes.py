@@ -670,7 +670,6 @@ class Plotter:
         charged_default_df = df[df['loan_status'].isin(['Charged Off','Default'])]
         late_df = df[df['loan_status'].isin(['Late (31-120 days)','In Grace Period', 'Late (16-30 days)'])]
 
-
         overall_count = df[column].value_counts(normalize=True)
         paid_count = paid_df[column].value_counts(normalize=True)
         charged_off_default_count = charged_default_df[column].value_counts(normalize=True)
