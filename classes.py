@@ -407,7 +407,49 @@ class DataFrameInfo:
         
         collections['collections_over_period'] = collections.apply(predicted_recovery, axis=1)
 
-        return collections             
+        return collections      
+    
+    def monthly_revenue_lost(self):
+
+        '''
+        returns the cumulative revenue lost for each month of the remaining term.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        ----------
+        a list of the total revenue lost per month
+
+        '''
+        df_copy = self.dataframe.copy()
+
+        def term_end(i):
+            if i['term'] == '36 months': 
+                return i['issue_date'] + 36
+            elif i['term'] == '60 months':
+                return i['issue_date'] + 60
+            
+        df_copy['term_end'] = df_copy.apply(term_end, axis=1)
+        
+        df_copy['term_left'] = df_copy['term_end'].astype(int) - df_copy['last_payment_date'].astype(int)
+        
+        df_copy['term_completed'] = df_copy['last_payment_date'].astype(int) - df_copy['issue_date'].astype(int)
+
+        revenue_lost = []
+        cumulative_revenue_lost = 0
+
+        for month in range(1, (df_copy['term_left'].max()+1)):
+            df_copy = df_copy[df_copy['term_left']>0]
+
+            cumulative_revenue_lost = df_copy['instalment'].sum() 
+            revenue_lost.append(cumulative_revenue_lost)
+
+            df_copy['term_left'] = df_copy['term_left'] - 1
+        
+        return revenue_lost
+       
 class Plotter:
     """
     A class for plotting information from a dataframe
@@ -526,7 +568,7 @@ class Plotter:
                 pyplot.show()
                 
         
-    def scatter_plot(self,x,y,xlab=None,ylab=None,title=None):
+    def scatter_plot(self,x,y,xlab=None,ylab=None,title=None, size = (15,13)):
         """
         Plots a scatter plot between two columns
 
@@ -542,17 +584,35 @@ class Plotter:
         -------
         none
         """
+        pyplot.figure(figsize=size)
         sns.regplot(x= x, y= y, marker= 'x',line_kws={'linewidth':0.5})
         pyplot.xlabel(xlab)
         pyplot.ylabel(ylab)
         pyplot.title(title)
         pyplot.show()
 
-    def bar_plot(self,x,y,xlab=None,ylab=None,title=None):
+    def bar_plot(self,x,y,xlab=None,ylab=None,title=None,size=(15,13)):
+        """
+        Plots a bar plot between two columns
+
+        Parameters
+        ----------
+        x:
+            column to use as the data for x-axis
+
+        y:
+            column to use as the data for y-axis
+
+        Returns
+        -------
+        none
+        """
+        pyplot.figure(figsize=size)
         sns.barplot(x= x, y= y)
         pyplot.xlabel(xlab)
         pyplot.ylabel(ylab)
         pyplot.title(title)
+        pyplot.figure(figsize=size)
         pyplot.show()
     
     def grid_box_plot(self, column_names):
@@ -591,6 +651,46 @@ class Plotter:
         sns.heatmap(corr,square=True, annot=True, fmt=".2f")
         pyplot.title('Correlation Heatmap')
         pyplot.show()
+
+    def risk_comparison(self,column,size = (12,12)):
+        '''
+        plots four bar plots to illustrate the trends of a particular column in different subsets of the dataframe
+
+        Parameters
+        ----------
+        column_name:
+            name of the column in the dataframe to plot for
+        
+        Returns
+        -------
+           a plot consisting of four bar plots for the different subsets of the dataset
+        '''
+        df = self.dataframe.copy()
+        paid_df = df[df['loan_status'] == 'Fully Paid']
+        charged_default_df = df[df['loan_status'].isin(['Charged Off','Default'])]
+        late_df = df[df['loan_status'].isin(['Late (31-120 days)','In Grace Period', 'Late (16-30 days)'])]
+
+
+        overall_count = df[column].value_counts(normalize=True)
+        paid_count = paid_df[column].value_counts(normalize=True)
+        charged_off_default_count = charged_default_df[column].value_counts(normalize=True)
+        late_count = late_df[column].value_counts(normalize=True)
+
+        fig, axes = pyplot.subplots(nrows=4, ncols=1, figsize=size)
+
+        axes[0].set_title('All Loans')
+        axes[1].set_title('Fully Paid Loans')
+        axes[2].set_title('Charged off and Default Loans')
+        axes[3].set_title('Late Loans')
+
+        sns.barplot(x=overall_count.values, y=overall_count.index, ax=axes[0]) 
+        sns.barplot(x=paid_count.values, y=paid_count.index, ax=axes[1])
+        sns.barplot(x=charged_off_default_count.values, y=charged_off_default_count.index, ax=axes[2])
+        sns.barplot(x=late_count.values, y=late_count.index, ax=axes[3])
+
+        pyplot.show()
+
+
 
 class DataFrameTransform(DataFrameInfo):
     """

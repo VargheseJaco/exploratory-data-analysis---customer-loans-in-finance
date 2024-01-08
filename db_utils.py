@@ -9,3 +9,5 @@ conn = RDSDatabaseConnector(credentials_dict)
 
 conn.engine_init()
 conn.data_to_csv('loan_payments',Path('loan_payments.csv'))
+
+# %%
